@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import "./App.css";
 
 import { Switch, Route } from "react-router-dom";
@@ -9,33 +9,61 @@ import SignInAndSignUp from "./pages/sign-in-and-sign-up/sign-in-and-sign-up.pag
 
 import Header from "./components/header/header.component";
 
-import { auth } from "./components/firebase/firebase.utils";
+import {
+	auth,
+	createUserProfileDocument,
+} from "./components/firebase/firebase.utils";
 
-function App() {
-	const [currentUser, setCurrentUser] = useState(null);
+class App extends React.Component {
+	constructor(props) {
+		super(props);
 
-	useEffect(() => {
-		let unsubscribeFromAuth = null;
-		unsubscribeFromAuth = auth.onAuthStateChanged((user) => {
-			setCurrentUser(user);
-			console.log(user);
-		});
-
-		return () => {
-			unsubscribeFromAuth();
+		this.state = {
+			currentUser: null,
 		};
-	}, [currentUser]);
+	}
 
-	return (
-		<div className="app">
-			<Header currentUser={currentUser} />
-			<Switch>
-				<Route exact path="/" component={HomePage} />
-				<Route path="/shop" component={ShopPage} />
-				<Route path="/signin" component={SignInAndSignUp} />
-			</Switch>
-		</div>
-	);
+	unsubscribeFromAuth = null;
+
+	componentDidMount() {
+		this.unsubscribeFromAuth = auth.onAuthStateChanged(async (userAuth) => {
+			if (userAuth) {
+				const userRef = await createUserProfileDocument(userAuth);
+				userRef.onSnapshot((snapshot) => {
+					this.setState(
+						{
+							currentUser: {
+								id: snapshot.id,
+								...snapshot.data(),
+							},
+						},
+						() => {
+							console.log(this.state);
+						}
+					);
+				});
+			} else {
+				this.setState({ currentUser: userAuth });
+			}
+		});
+	}
+
+	componentWillUnmount() {
+		this.unsubscribeFromAuth();
+	}
+
+	render() {
+		return (
+			<div className="app">
+				<Header currentUser={this.state.currentUser} />
+				<Switch>
+					<Route exact path="/" component={HomePage} />
+					<Route path="/shop" component={ShopPage} />
+					<Route path="/signin" component={SignInAndSignUp} />
+				</Switch>
+			</div>
+		);
+	}
 }
 
 export default App;

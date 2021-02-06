@@ -40,14 +40,13 @@ class SignIn extends React.Component {
 
 	handleChange = (e) => {
 		const { value, name } = e.target;
-
 		this.setState({ [name]: value });
 	};
 
 	render() {
 		return (
 			<div className="sign-in">
-				<h2 className="title">I alread have an account</h2>
+				<h2 className="title">I already have an account</h2>
 				<span>Sign in with your email and password</span>
 
 				<form onSubmit={this.handleSubmit}>
